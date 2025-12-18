@@ -1,0 +1,14 @@
+# node
+node_modules/
+npm-debug.log*
+
+# env
+.env
+.env.*
+
+# build
+dist/
+.vite/
+
+# os
+.DS_Store
