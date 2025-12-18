@@ -30,5 +30,6 @@ export async function POST(req: Request) {
   const data = await r.json().catch(() => ({}));
   if (!r.ok) return NextResponse.json(data, { status: r.status });
 
-  return NextResponse.json({ client_secret: data.client_secret });
+return NextResponse.json({ client_secret: data.client_secret?.value });
+
 }
