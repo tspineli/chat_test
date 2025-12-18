@@ -4,12 +4,8 @@ export async function POST(req: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
   const workflowId = process.env.CHATKIT_WORKFLOW_ID;
 
-  if (!apiKey) {
-    return NextResponse.json({ error: "Missing OPENAI_API_KEY" }, { status: 500 });
-  }
-  if (!workflowId) {
-    return NextResponse.json({ error: "Missing CHATKIT_WORKFLOW_ID" }, { status: 500 });
-  }
+  if (!apiKey) return NextResponse.json({ error: "Missing OPENAI_API_KEY" }, { status: 500 });
+  if (!workflowId) return NextResponse.json({ error: "Missing CHATKIT_WORKFLOW_ID" }, { status: 500 });
 
   const body = await req.json().catch(() => ({}));
   const user = body?.user ?? "poc-user";
@@ -19,17 +15,25 @@ export async function POST(req: Request) {
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`,
-      "OpenAI-Beta": "chatkit_beta=v1"
+      "OpenAI-Beta": "chatkit_beta=v1",
     },
-    body: JSON.stringify({
-      workflow: { id: workflowId },
-      user
-    })
+    body: JSON.stringify({ workflow: { id: workflowId }, user }),
   });
 
   const data = await r.json().catch(() => ({}));
-  if (!r.ok) return NextResponse.json(data, { status: r.status });
 
-return NextResponse.json({ client_secret: data.client_secret?.value });
+  if (!r.ok) {
+    return NextResponse.json({ error: "OpenAI chatkit session failed", details: data }, { status: r.status });
+  }
 
+  const secret = data?.client_secret?.value ?? data?.client_secret; // cobre ambos formatos
+
+  if (!secret || typeof secret !== "string") {
+    return NextResponse.json(
+      { error: "Missing client_secret in OpenAI response", details: data },
+      { status: 502 }
+    );
+  }
+
+  return NextResponse.json({ client_secret: secret });
 }
